@@ -1,9 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_core/firebase_core.dart';
+import 'package:project1/screens/add_edit_screen.dart';
+import 'package:project1/screens/detail_screen.dart';
 import 'package:provider/provider.dart';
 import 'firebase_options.dart';
 import 'package:project1/providers/task_provider.dart';
 import 'package:project1/screens/list_screen.dart';
+import 'package:project1/models/task.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -21,7 +24,6 @@ class TodoApp extends StatelessWidget {
     return MultiProvider(
       providers: [
         ChangeNotifierProvider(create: (_) => TaskProvider()),
-        // Adicione outros providers aqui, se necessário (configuração, theme etc.)
       ],
       child: MaterialApp(
         title: 'Todo App com Firestore',
@@ -31,10 +33,20 @@ class TodoApp extends StatelessWidget {
         ),
         home: const ListScreen(),
         routes: {
-          // Adicione aqui as rotas adicionais quando criar as telas Add/Edit e Detail
-          // AddEditScreen.routeName: (ctx) => AddEditScreen(),
-          // DetailScreen.routeName: (ctx) => DetailScreen(),
+          ListScreen.routeName: (ctx) => const ListScreen(),
+          AddEditScreen.routeName: (ctx) => AddEditScreen(),
+
         },
+          onGenerateRoute: (settings) {
+            if (settings.name == DetailScreen.routeName) {
+              final task = settings.arguments as Task;
+              return MaterialPageRoute(
+                builder: (context) => DetailScreen(task: task),
+              );
+            }
+            // Retorne null se não reconhecer, ou um fallback
+            return null;
+          }
       ),
     );
   }

@@ -98,7 +98,7 @@ class _AddEditScreenState extends State<AddEditScreen> {
                 textInputAction: TextInputAction.next,
                 validator: (value) {
                   if (value == null || value.trim().isEmpty) {
-                    return 'Informe o título';
+                    return 'Preecha o título';
                   }
                   if (value.trim().length < 3) {
                     return 'O título precisa ter pelo menos 3 caracteres';
@@ -115,7 +115,7 @@ class _AddEditScreenState extends State<AddEditScreen> {
                 textInputAction: TextInputAction.next,
                 validator: (value) {
                   if (value == null || value.trim().isEmpty) {
-                    return 'Informe a descrição';
+                    return 'Preencha a descrição';
                   }
                   return null;
                 },
