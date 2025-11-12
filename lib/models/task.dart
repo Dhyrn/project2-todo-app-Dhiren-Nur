@@ -1,11 +1,28 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 
+enum Priority {
+  critico,
+  alta,
+  media,
+  baixa,
+  deixaPaOutroDia,
+}
+
+const priorityLabels = {
+  Priority.critico:       'Crítico' ,
+  Priority.alta:          'Alta',
+  Priority.media:         'Média',
+  Priority.baixa:         'Baixa',
+  Priority.deixaPaOutroDia: 'Deixa pa outro dia',
+};
+
+
 class Task {
   String? id;
   String title;
   String description;
   DateTime? dueDate;
-  String? priority;
+  final Priority priority;
   String? category;
   bool isDone;
   DateTime? createdAt;
@@ -16,7 +33,7 @@ class Task {
     required this.title,
     required this.description,
     this.dueDate,
-    this.priority,
+    required this.priority,
     this.category,
     this.isDone = false,
     this.createdAt,
@@ -31,7 +48,7 @@ class Task {
       title: map['title'] ?? '',
       description: map['description'] ?? '',
       dueDate: (map['dueDate'] as Timestamp?)?.toDate(),
-      priority: map['priority'],
+      priority: Priority.values[map['priority'] ?? 2], // Média como default, se não existir
       category: map['category'],
       isDone: map['isDone'] ?? false,
       createdAt: tsCreated?.toDate(),
@@ -44,7 +61,7 @@ class Task {
       'title': title,
       'description': description,
       'dueDate': dueDate,
-      'priority': priority,
+      'priority': priority.index,
       'category': category,
       'isDone': isDone,
       'createdAt': createdAt,

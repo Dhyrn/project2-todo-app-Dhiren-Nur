@@ -33,7 +33,8 @@ class ListScreen extends StatelessWidget {
               if (taskProvider.error != null) {
                 return Center(child: Text('Erro: ${taskProvider.error}'));
               }
-              final tasks = taskProvider.tasks;
+              final tasks = List<Task>.from(taskProvider.tasks)
+                ..sort((a, b) => a.priority.index.compareTo(b.priority.index));
               if (tasks.isEmpty) {
                 return const Center(child: Text('Nenhuma tarefa ainda'));
               }
@@ -49,7 +50,7 @@ class ListScreen extends StatelessWidget {
                         color: task.isDone ? Colors.green : null,
                       ),
                       title: Text(
-                        task.title,
+                        ('${task.title} (${priorityLabels[task.priority]})'),
                         style: TextStyle(
                           decoration: task.isDone
                               ? TextDecoration.lineThrough

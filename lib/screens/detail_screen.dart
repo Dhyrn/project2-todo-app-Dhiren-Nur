@@ -4,16 +4,36 @@ import '../models/task.dart';
 import '../providers/task_provider.dart';
 import 'add_edit_screen.dart';
 
-class DetailScreen extends StatelessWidget {
+class DetailScreen extends StatefulWidget {
   static const routeName = '/detail';
   final Task task;
-
   const DetailScreen({Key? key, required this.task}) : super(key: key);
 
   @override
-  Widget build(BuildContext context) {
-    final provider = Provider.of<TaskProvider>(context, listen: false);
+  State<DetailScreen> createState() => _DetailScreenState();
+}
 
+class _DetailScreenState extends State<DetailScreen> {
+  late bool _isDone;
+
+  @override
+  void initState() {
+    super.initState();
+    _isDone = widget.task.isDone;
+  }
+
+  void _toggleDone(bool value) async {
+    setState(() {
+      _isDone = value;
+    });
+    final provider = Provider.of<TaskProvider>(context, listen: false);
+    await provider.setTaskDone(widget.task.id!, value);
+    // Aqui, se quiser, você pode mostrar um feedback visual/snackbar
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final task = widget.task;
     return Scaffold(
       appBar: AppBar(
         title: const Text('Detalhes da Tarefa'),
@@ -21,11 +41,10 @@ class DetailScreen extends StatelessWidget {
           IconButton(
             icon: const Icon(Icons.edit),
             onPressed: () {
-              Navigator.push(
-                context,
-                MaterialPageRoute(
-                  builder: (_) => AddEditScreen(existingTask: task),
-                ),
+              Navigator.pushNamed(
+                  context,
+                  AddEditScreen.routeName,
+                  arguments: widget.task,
               );
             },
           ),
@@ -48,26 +67,18 @@ class DetailScreen extends StatelessWidget {
               Text('Categoria: ${task.category}', style: Theme.of(context).textTheme.bodySmall),
               const SizedBox(height: 8),
             ],
-            if (task.priority != null) ...[
-              Text('Prioridade: ${task.priority}', style: Theme.of(context).textTheme.bodySmall),
-              const SizedBox(height: 16),
-            ],
+            Text(
+              'Prioridade: ${priorityLabels[task.priority]}',
+              style: Theme.of(context).textTheme.bodySmall,
+            ),
+            const SizedBox(height: 16),
             Row(
               children: [
                 const Text('Concluída: '),
                 Switch(
-                  value: task.isDone,
-                  onChanged: (value) {
-                    provider.setTaskDone(task.id!, value);
-                  },
+                  value: _isDone,
+                  onChanged: (value) => _toggleDone(value),
                 ),
-                Switch(
-                  value: task.isDone,
-                  onChanged: (value) {
-                    final provider = Provider.of<TaskProvider>(context, listen: false);
-                    provider.setTaskDone(task.id!, value);
-                  },
-                )
               ],
             ),
           ],

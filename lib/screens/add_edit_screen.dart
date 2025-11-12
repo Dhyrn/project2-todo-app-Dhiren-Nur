@@ -5,7 +5,6 @@ import '../providers/task_provider.dart';
 
 class AddEditScreen extends StatefulWidget {
   static const routeName = '/add-edit';
-
   final Task? existingTask;
 
   const AddEditScreen({Key? key, this.existingTask}) : super(key: key);
@@ -17,40 +16,49 @@ class AddEditScreen extends StatefulWidget {
 class _AddEditScreenState extends State<AddEditScreen> {
   final _formKey = GlobalKey<FormState>();
 
-  // Campos do formulário
   late String _title;
   late String _description;
   DateTime? _dueDate;
   String? _category;
-  String? _priority;
+  late Priority _priority;
 
+  Task? _taskToEdit;
+  bool _didLoadArgs = false;
   bool _isSaving = false;
 
   @override
-  void initState() {
-    super.initState();
-    final task = widget.existingTask;
-    _title = task?.title ?? '';
-    _description = task?.description ?? '';
-    _dueDate = task?.dueDate;
-    _category = task?.category;
-    _priority = task?.priority;
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    if (!_didLoadArgs) {
+      final args = ModalRoute.of(context)?.settings.arguments;
+      if (args is Task) {
+        _taskToEdit = args;
+      } else {
+        _taskToEdit = widget.existingTask;
+      }
+      _title = _taskToEdit?.title ?? '';
+      _description = _taskToEdit?.description ?? '';
+      _dueDate = _taskToEdit?.dueDate;
+      _category = _taskToEdit?.category;
+      _priority = _taskToEdit?.priority ?? Priority.media;
+      _didLoadArgs = true;
+    }
   }
 
   Future<void> _saveForm() async {
     if (!_formKey.currentState!.validate()) return;
     _formKey.currentState!.save();
 
-    final isEditing = widget.existingTask != null;
+    final isEditing = _taskToEdit != null;
     final newTask = Task(
-      id: widget.existingTask?.id,
+      id: _taskToEdit?.id,
       title: _title,
       description: _description,
       dueDate: _dueDate,
       category: _category,
       priority: _priority,
-      isDone: widget.existingTask?.isDone ?? false,
-      createdAt: widget.existingTask?.createdAt,
+      isDone: _taskToEdit?.isDone ?? false,
+      createdAt: _taskToEdit?.createdAt,
       updatedAt: DateTime.now(),
     );
 
@@ -74,7 +82,7 @@ class _AddEditScreenState extends State<AddEditScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final isEditing = widget.existingTask != null;
+    final isEditing = _taskToEdit != null;
 
     return Scaffold(
       appBar: AppBar(
@@ -98,7 +106,7 @@ class _AddEditScreenState extends State<AddEditScreen> {
                 textInputAction: TextInputAction.next,
                 validator: (value) {
                   if (value == null || value.trim().isEmpty) {
-                    return 'Preecha o título';
+                    return 'Preencha o título';
                   }
                   if (value.trim().length < 3) {
                     return 'O título precisa ter pelo menos 3 caracteres';
@@ -123,7 +131,6 @@ class _AddEditScreenState extends State<AddEditScreen> {
               ),
               const SizedBox(height: 12),
 
-              // Data de vencimento opcional
               InputDatePickerFormField(
                 firstDate: DateTime(2000),
                 lastDate: DateTime(2100),
@@ -140,11 +147,20 @@ class _AddEditScreenState extends State<AddEditScreen> {
               ),
               const SizedBox(height: 12),
 
-              TextFormField(
-                initialValue: _priority,
+              DropdownButtonFormField<Priority>(
+                value: _priority,
+                items: Priority.values.map((p) {
+                  return DropdownMenuItem(
+                    value: p,
+                    child: Text(priorityLabels[p]!),
+                  );
+                }).toList(),
                 decoration: const InputDecoration(labelText: 'Prioridade'),
-                onSaved: (value) => _priority = value?.trim(),
+                onChanged: (newP) => setState(() => _priority = newP!),
+                validator: (p) => p == null ? 'Selecione a prioridade' : null,
+                onSaved: (p) => _priority = p!,
               ),
+
               const SizedBox(height: 20),
 
               Row(
