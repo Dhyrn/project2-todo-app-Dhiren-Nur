@@ -36,12 +36,28 @@ class _AddEditScreenState extends State<AddEditScreen> {
       } else {
         _taskToEdit = widget.existingTask;
       }
+
       _title = _taskToEdit?.title ?? '';
       _description = _taskToEdit?.description ?? '';
       _dueDate = _taskToEdit?.dueDate;
       _category = _taskToEdit?.category;
       _priority = _taskToEdit?.priority ?? Priority.media;
+
       _didLoadArgs = true;
+    }
+  }
+
+  Future<void> _pickDate() async {
+    final now = DateTime.now();
+    final selected = await showDatePicker(
+      context: context,
+      firstDate: DateTime(2000),
+      lastDate: DateTime(2100),
+      initialDate: _dueDate ?? now,
+    );
+
+    if (selected != null) {
+      setState(() => _dueDate = selected);
     }
   }
 
@@ -58,25 +74,53 @@ class _AddEditScreenState extends State<AddEditScreen> {
       category: _category,
       priority: _priority,
       isDone: _taskToEdit?.isDone ?? false,
-      createdAt: _taskToEdit?.createdAt,
+      createdAt: _taskToEdit?.createdAt ?? DateTime.now(),
       updatedAt: DateTime.now(),
     );
 
     setState(() => _isSaving = true);
+
     final provider = Provider.of<TaskProvider>(context, listen: false);
+
     try {
       if (isEditing) {
         await provider.updateTask(newTask);
       } else {
         await provider.addTask(newTask);
       }
+
       if (mounted) Navigator.of(context).pop();
     } catch (e) {
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Erro ao salvar: ${e.toString()}')),
+        SnackBar(content: Text('Erro ao salvar: $e')),
       );
     } finally {
       if (mounted) setState(() => _isSaving = false);
+    }
+  }
+
+  InputDecoration _inputStyle(String label) {
+    return InputDecoration(
+      labelText: label,
+      border: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(12),
+      ),
+      contentPadding: const EdgeInsets.symmetric(vertical: 12, horizontal: 16),
+    );
+  }
+
+  Color _priorityColor(Priority p) {
+    switch (p) {
+      case Priority.critico:
+        return Colors.red;
+      case Priority.alta:
+        return Colors.orange;
+      case Priority.media:
+        return Colors.amber;
+      case Priority.baixa:
+        return Colors.green;
+      case Priority.deixaPaOutroDia:
+        return Colors.blueGrey;
     }
   }
 
@@ -100,10 +144,10 @@ class _AddEditScreenState extends State<AddEditScreen> {
           key: _formKey,
           child: ListView(
             children: [
+              // Título
               TextFormField(
                 initialValue: _title,
-                decoration: const InputDecoration(labelText: 'Título'),
-                textInputAction: TextInputAction.next,
+                decoration: _inputStyle('Título'),
                 validator: (value) {
                   if (value == null || value.trim().isEmpty) {
                     return 'Preencha o título';
@@ -115,12 +159,13 @@ class _AddEditScreenState extends State<AddEditScreen> {
                 },
                 onSaved: (value) => _title = value!.trim(),
               ),
-              const SizedBox(height: 12),
+              const SizedBox(height: 16),
 
+              // Descrição
               TextFormField(
                 initialValue: _description,
-                decoration: const InputDecoration(labelText: 'Descrição'),
-                textInputAction: TextInputAction.next,
+                decoration: _inputStyle('Descrição'),
+                maxLines: 3,
                 validator: (value) {
                   if (value == null || value.trim().isEmpty) {
                     return 'Preencha a descrição';
@@ -129,40 +174,58 @@ class _AddEditScreenState extends State<AddEditScreen> {
                 },
                 onSaved: (value) => _description = value!.trim(),
               ),
-              const SizedBox(height: 12),
+              const SizedBox(height: 16),
 
-              InputDatePickerFormField(
-                firstDate: DateTime(2000),
-                lastDate: DateTime(2100),
-                initialDate: _dueDate ?? DateTime.now(),
-                onDateSubmitted: (date) => _dueDate = date,
-                onDateSaved: (date) => _dueDate = date,
+              // Data
+              GestureDetector(
+                onTap: _pickDate,
+                child: AbsorbPointer(
+                  child: TextFormField(
+                    decoration: _inputStyle('Data de vencimento'),
+                    controller: TextEditingController(
+                      text: _dueDate == null
+                          ? ''
+                          : '${_dueDate!.day}/${_dueDate!.month}/${_dueDate!.year}',
+                    ),
+                  ),
+                ),
               ),
-              const SizedBox(height: 12),
+              const SizedBox(height: 16),
 
+              // Categoria
               TextFormField(
                 initialValue: _category,
-                decoration: const InputDecoration(labelText: 'Categoria'),
+                decoration: _inputStyle('Categoria'),
                 onSaved: (value) => _category = value?.trim(),
               ),
-              const SizedBox(height: 12),
+              const SizedBox(height: 16),
 
+              // Prioridade
               DropdownButtonFormField<Priority>(
                 value: _priority,
+                decoration: _inputStyle('Prioridade'),
                 items: Priority.values.map((p) {
                   return DropdownMenuItem(
                     value: p,
-                    child: Text(priorityLabels[p]!),
+                    child: Row(
+                      children: [
+                        CircleAvatar(
+                          radius: 6,
+                          backgroundColor: _priorityColor(p),
+                        ),
+                        const SizedBox(width: 8),
+                        Text(priorityLabels[p]!),
+                      ],
+                    ),
                   );
                 }).toList(),
-                decoration: const InputDecoration(labelText: 'Prioridade'),
                 onChanged: (newP) => setState(() => _priority = newP!),
                 validator: (p) => p == null ? 'Selecione a prioridade' : null,
                 onSaved: (p) => _priority = p!,
               ),
-
               const SizedBox(height: 20),
 
+              // Botões
               Row(
                 mainAxisAlignment: MainAxisAlignment.end,
                 children: [
@@ -170,13 +233,13 @@ class _AddEditScreenState extends State<AddEditScreen> {
                     onPressed: () => Navigator.of(context).pop(),
                     child: const Text('Cancelar'),
                   ),
-                  const SizedBox(width: 8),
+                  const SizedBox(width: 12),
                   ElevatedButton(
                     onPressed: _isSaving ? null : _saveForm,
                     child: _isSaving
                         ? const SizedBox(
-                      width: 16,
-                      height: 16,
+                      width: 18,
+                      height: 18,
                       child: CircularProgressIndicator(strokeWidth: 2),
                     )
                         : Text(isEditing ? 'Atualizar' : 'Salvar'),
