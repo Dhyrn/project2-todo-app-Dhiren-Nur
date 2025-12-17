@@ -142,7 +142,7 @@ class ListScreen extends StatelessWidget {
                                 ),
 
                                 title: Text(
-                                  '${task.title} (${priorityLabels[task.priority]})',
+                                  '${task.title}',
                                   style: TextStyle(
                                     fontSize: 16,
                                     fontWeight: FontWeight.w600,
