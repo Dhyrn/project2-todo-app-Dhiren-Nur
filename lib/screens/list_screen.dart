@@ -5,6 +5,8 @@ import '../providers/task_provider.dart';
 import '../widgets/weather_widget.dart';
 import './add_edit_screen.dart';
 import './detail_screen.dart';
+import './profile_screen.dart';
+
 
 class ListScreen extends StatelessWidget {
   static const routeName = '/list';
@@ -29,6 +31,19 @@ class ListScreen extends StatelessWidget {
           ),
         ),
         centerTitle: true,
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.person),
+            onPressed: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (_) => const ProfileScreen(),
+                ),
+              );
+            },
+          ),
+        ],
       ),
       body: Column(
         children: [
