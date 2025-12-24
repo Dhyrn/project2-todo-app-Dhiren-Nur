@@ -1,13 +1,20 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../models/task.dart';
+import '../models/project.dart';
 import '../providers/task_provider.dart';
+import '../providers/project_provider.dart';
 
 class AddEditScreen extends StatefulWidget {
   static const routeName = '/add-edit';
   final Task? existingTask;
+  final String? initialProjectId;
 
-  const AddEditScreen({Key? key, this.existingTask}) : super(key: key);
+  const AddEditScreen({
+    Key? key,
+    this.existingTask,
+    this.initialProjectId,
+  }) : super(key: key);
 
   @override
   _AddEditScreenState createState() => _AddEditScreenState();
@@ -19,9 +26,8 @@ class _AddEditScreenState extends State<AddEditScreen> {
   late String _title;
   late String _description;
   DateTime? _dueDate;
-  String? _category;
+  String? _selectedProjectId;
   late Priority _priority;
-
   Task? _taskToEdit;
   bool _didLoadArgs = false;
   bool _isSaving = false;
@@ -40,7 +46,8 @@ class _AddEditScreenState extends State<AddEditScreen> {
       _title = _taskToEdit?.title ?? '';
       _description = _taskToEdit?.description ?? '';
       _dueDate = _taskToEdit?.dueDate;
-      _category = _taskToEdit?.category;
+      _selectedProjectId =
+          _taskToEdit?.projectId ?? widget.initialProjectId;
       _priority = _taskToEdit?.priority ?? Priority.media;
 
       _didLoadArgs = true;
@@ -71,7 +78,7 @@ class _AddEditScreenState extends State<AddEditScreen> {
       title: _title,
       description: _description,
       dueDate: _dueDate,
-      category: _category,
+      projectId: _selectedProjectId,
       priority: _priority,
       isDone: _taskToEdit?.isDone ?? false,
       createdAt: _taskToEdit?.createdAt ?? DateTime.now(),
@@ -105,7 +112,8 @@ class _AddEditScreenState extends State<AddEditScreen> {
       border: OutlineInputBorder(
         borderRadius: BorderRadius.circular(12),
       ),
-      contentPadding: const EdgeInsets.symmetric(vertical: 12, horizontal: 16),
+      contentPadding:
+      const EdgeInsets.symmetric(vertical: 12, horizontal: 16),
     );
   }
 
@@ -127,6 +135,8 @@ class _AddEditScreenState extends State<AddEditScreen> {
   @override
   Widget build(BuildContext context) {
     final isEditing = _taskToEdit != null;
+    final projectProvider = Provider.of<ProjectProvider>(context);
+    final List<Project> projects = projectProvider.projects;
 
     return Scaffold(
       appBar: AppBar(
@@ -192,11 +202,27 @@ class _AddEditScreenState extends State<AddEditScreen> {
               ),
               const SizedBox(height: 16),
 
-              // Categoria
-              TextFormField(
-                initialValue: _category,
-                decoration: _inputStyle('Categoria'),
-                onSaved: (value) => _category = value?.trim(),
+              // Projeto (dropdown)
+              DropdownButtonFormField<String>(
+                decoration: _inputStyle('Projeto'),
+                value: _selectedProjectId,
+                items: [
+                  const DropdownMenuItem<String>(
+                    value: null,
+                    child: Text('Sem projeto'),
+                  ),
+                  ...projects.map(
+                        (p) => DropdownMenuItem<String>(
+                      value: p.id,
+                      child: Text(p.name),
+                    ),
+                  ),
+                ],
+                onChanged: (value) {
+                  setState(() {
+                    _selectedProjectId = value;
+                  });
+                },
               ),
               const SizedBox(height: 16),
 
@@ -220,7 +246,8 @@ class _AddEditScreenState extends State<AddEditScreen> {
                   );
                 }).toList(),
                 onChanged: (newP) => setState(() => _priority = newP!),
-                validator: (p) => p == null ? 'Selecione a prioridade' : null,
+                validator: (p) =>
+                p == null ? 'Selecione a prioridade' : null,
                 onSaved: (p) => _priority = p!,
               ),
               const SizedBox(height: 20),
@@ -240,7 +267,8 @@ class _AddEditScreenState extends State<AddEditScreen> {
                         ? const SizedBox(
                       width: 18,
                       height: 18,
-                      child: CircularProgressIndicator(strokeWidth: 2),
+                      child:
+                      CircularProgressIndicator(strokeWidth: 2),
                     )
                         : Text(isEditing ? 'Atualizar' : 'Salvar'),
                   ),

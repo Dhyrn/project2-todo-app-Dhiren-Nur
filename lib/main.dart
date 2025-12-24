@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_core/firebase_core.dart';
+import 'package:project1/services/firestore_service.dart';
 import 'screens/add_edit_screen.dart';
 import 'screens/detail_screen.dart';
 import 'package:provider/provider.dart';
@@ -9,6 +10,8 @@ import 'screens/list_screen.dart';
 import 'models/task.dart';
 import 'screens/login_screen.dart';
 import 'providers/auth_provider.dart';
+import 'providers/project_provider.dart';
+
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -27,6 +30,7 @@ class TodoApp extends StatelessWidget {
       providers: [
         ChangeNotifierProvider(create: (_) => AuthProvider()),
         ChangeNotifierProvider(create: (_) => TaskProvider()),
+        ChangeNotifierProvider(create: (_) => ProjectProvider(FirestoreService())),
       ],
       child: const _RootApp(),
     );
@@ -40,11 +44,13 @@ class _RootApp extends StatelessWidget {
   Widget build(BuildContext context) {
     return Consumer<AuthProvider>(
       builder: (context, auth, _) {
-        // agenda a atualização do TaskProvider para depois deste build
+        // agenda a atualização dos providers para depois deste build
         WidgetsBinding.instance.addPostFrameCallback((_) {
-          final taskProvider =
-          Provider.of<TaskProvider>(context, listen: false);
+          final taskProvider = Provider.of<TaskProvider>(context, listen: false);
           taskProvider.updateUser(auth.user?.uid);
+
+          final projectProvider = Provider.of<ProjectProvider>(context, listen: false);
+          projectProvider.updateUser(auth.user?.uid);
         });
 
         return MaterialApp(

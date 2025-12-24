@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../models/task.dart';
+import '../models/project.dart';
+import '../providers/project_provider.dart';
 import '../providers/task_provider.dart';
 import 'add_edit_screen.dart';
 
@@ -53,6 +55,13 @@ class _DetailScreenState extends State<DetailScreen> {
   Widget build(BuildContext context) {
     final task = widget.task;
     final priorityColor = _priorityColor(task.priority);
+    final projectProvider = Provider.of<ProjectProvider>(context);
+    Project? project;
+    if (task.projectId != null) {
+      project = projectProvider.projects
+          .firstWhere((p) => p.id == task.projectId, orElse: () => Project(id: '', name: '', color: '#FF6F00'));
+      if (project.id == '') project = null;
+    }
 
     return Scaffold(
       backgroundColor: const Color(0xFFF5F6FA),
@@ -189,11 +198,11 @@ class _DetailScreenState extends State<DetailScreen> {
                       value: task.dueDate!.toLocal().toString().split(' ')[0],
                     ),
 
-                  if (task.category != null)
+                  if (project != null)
                     _infoRow(
                       icon: Icons.folder,
-                      label: 'Categoria',
-                      value: task.category!,
+                      label: 'Projeto',
+                      value: project.name!,
                     ),
                 ],
               ),

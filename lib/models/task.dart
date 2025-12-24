@@ -21,9 +21,9 @@ class Task {
   String? id;
   String title;
   String description;
+  String? projectId;  // ← NOVO: substitui category
   DateTime? dueDate;
   final Priority priority;
-  String? category;
   bool isDone;
   DateTime? createdAt;
   DateTime? updatedAt;
@@ -32,9 +32,9 @@ class Task {
     this.id,
     required this.title,
     required this.description,
+    this.projectId,    // ← NOVO
     this.dueDate,
     required this.priority,
-    this.category,
     this.isDone = false,
     this.createdAt,
     this.updatedAt,
@@ -47,9 +47,9 @@ class Task {
       id: id,
       title: map['title'] ?? '',
       description: map['description'] ?? '',
+      projectId: map['projectId'],  // ← NOVO: substitui category
       dueDate: (map['dueDate'] as Timestamp?)?.toDate(),
-      priority: Priority.values[map['priority'] ?? 2], // Média como default, se não existir
-      category: map['category'],
+      priority: Priority.values[map['priority'] ?? 2],
       isDone: map['isDone'] ?? false,
       createdAt: tsCreated?.toDate(),
       updatedAt: tsUpdated?.toDate(),
@@ -60,9 +60,9 @@ class Task {
     return {
       'title': title,
       'description': description,
+      'projectId': projectId,
       'dueDate': dueDate,
       'priority': priority.index,
-      'category': category,
       'isDone': isDone,
       'createdAt': createdAt,
       'updatedAt': updatedAt,

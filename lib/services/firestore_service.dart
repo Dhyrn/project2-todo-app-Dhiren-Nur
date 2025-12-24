@@ -1,5 +1,6 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import '../models/task.dart';
+import '../models/project.dart';
 
 class FirestoreService {
   final FirebaseFirestore _db = FirebaseFirestore.instance;
@@ -12,14 +13,15 @@ class FirestoreService {
   // stream de tasks do utilizador autenticado
   Stream<List<Task>> watchUserTasks(String userId) {
     return _userTasksRef(userId)
-        .orderBy('priority')         // já aproveita o enum index
+        .orderBy('priority')
         .snapshots()
         .map(
-          (snapshot) => snapshot.docs
-          .map(
-            (doc) => Task.fromFirestore(doc.data(), doc.id),
-      )
-          .toList(),
+          (snapshot) =>
+          snapshot.docs
+              .map(
+                (doc) => Task.fromFirestore(doc.data(), doc.id),
+          )
+              .toList(),
     );
   }
 
@@ -52,5 +54,48 @@ class FirestoreService {
     return snapshot.docs
         .map((doc) => Task.fromFirestore(doc.data(), doc.id))
         .toList();
+  }
+
+// ---------------- PROJECTS ----------------
+
+  CollectionReference<Map<String, dynamic>> _userProjectsRef(String userId) {
+    return _db.collection('users').doc(userId).collection('projects');
+  }
+
+  Stream<List<Project>> watchUserProjects(String userId) {
+    return _userProjectsRef(userId)
+        .orderBy('createdAt')
+        .snapshots()
+        .map(
+          (snapshot) =>
+          snapshot.docs
+              .map(
+                (doc) => Project.fromFirestore(doc.data(), doc.id),
+          )
+              .toList(),
+    );
+  }
+
+  Future<void> addProject(String userId, Project project) async {
+    final docRef = _userProjectsRef(userId).doc();
+    final projectToSave = Project(
+      id: docRef.id,
+      name: project.name,
+      color: project.color,
+      createdAt: project.createdAt ?? DateTime.now(),
+    );
+    await docRef.set(projectToSave.toFirestore());
+  }
+
+  Future<void> updateProject(String userId, Project project) async {
+    if (project.id == null) return;
+    await _userProjectsRef(userId)
+        .doc(project.id)
+        .update(project.toFirestore());
+  }
+
+  Future<void> deleteProject(String userId, String projectId) async {
+    await _userProjectsRef(userId).doc(projectId).delete();
+    // mais tarde podemos decidir o que fazer às tasks desse projeto
   }
 }
