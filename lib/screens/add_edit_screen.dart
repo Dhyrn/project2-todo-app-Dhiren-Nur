@@ -83,6 +83,8 @@ class _AddEditScreenState extends State<AddEditScreen> {
       isDone: _taskToEdit?.isDone ?? false,
       createdAt: _taskToEdit?.createdAt ?? DateTime.now(),
       updatedAt: DateTime.now(),
+      subtasks: _taskToEdit?.subtasks ?? [],
+      location: _taskToEdit?.location,
     );
 
     setState(() => _isSaving = true);

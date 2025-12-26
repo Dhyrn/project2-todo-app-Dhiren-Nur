@@ -73,4 +73,60 @@ class TaskProvider extends ChangeNotifier {
     if (_userId == null) return;
     await _firestore.setTaskDone(_userId!, id, isDone);
   }
+
+  Future<void> addAttachment(String taskId, String url) async {
+    if (_userId == null) return;
+
+    final task = _tasks.firstWhere(
+          (t) => t.id == taskId,
+      orElse: () => throw Exception('Task not found'),
+    );
+
+    final updated = Task(
+      id: task.id,
+      title: task.title,
+      description: task.description,
+      projectId: task.projectId,
+      dueDate: task.dueDate,
+      priority: task.priority,
+      isDone: task.isDone,
+      createdAt: task.createdAt,
+      updatedAt: DateTime.now(),
+      subtasks: task.subtasks,
+      location: task.location,
+      locationName: task.locationName,
+      attachments: [...task.attachments, url],
+    );
+
+    await _firestore.updateTask(_userId!, updated);
+  }
+
+  Future<void> removeAttachment(String taskId, String url) async {
+    if (_userId == null) return;
+
+    final task = _tasks.firstWhere(
+          (t) => t.id == taskId,
+      orElse: () => throw Exception('Task not found'),
+    );
+
+    final updated = Task(
+      id: task.id,
+      title: task.title,
+      description: task.description,
+      projectId: task.projectId,
+      dueDate: task.dueDate,
+      priority: task.priority,
+      isDone: task.isDone,
+      createdAt: task.createdAt,
+      updatedAt: DateTime.now(),
+      subtasks: task.subtasks,
+      location: task.location,
+      locationName: task.locationName,
+      attachments:
+      task.attachments.where((a) => a != url).toList(),
+    );
+
+    await _firestore.updateTask(_userId!, updated);
+  }
+
 }

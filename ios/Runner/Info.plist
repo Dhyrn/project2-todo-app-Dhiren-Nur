@@ -59,12 +59,11 @@
 		<string>UIInterfaceOrientationLandscapeRight</string>
 	</array>
 	<key>NSPhotoLibraryUsageDescription</key>
-    <string>We need access to your photo library to upload profile pictures.</string>
-
+    <string>Precisamos de aceder à sua galeria para anexar imagens.</string>
     <key>NSCameraUsageDescription</key>
-    <string>We need access to your camera to take profile pictures.</string>
+    <string>Precisamos de usar a câmara para tirar fotos e anexá-las.</string>
+    <key>NSPhotoLibraryAddUsageDescription</key>
+    <string>Precisamos de guardar imagens na sua galeria.</string>
 
-    <key>NSMicrophoneUsageDescription</key>
-    <string>We need access to your microphone for video recording.</string>
 </dict>
 </plist>

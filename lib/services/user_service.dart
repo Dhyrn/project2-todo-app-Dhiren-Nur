@@ -19,8 +19,8 @@ class UserService {
     }
   }
 
-  // Get user profile
-  Future<Map<String, dynamic>?> getUserProfile(String uid) async {
+  // Get user profile once
+  Future<Map<String, dynamic>?> getUserProfileOnce(String uid) async {
     try {
       final doc = await _firestore.collection('users').doc(uid).get();
       return doc.data();
@@ -30,12 +30,38 @@ class UserService {
     }
   }
 
-  // Update user profile
+  // Stream de perfil do utilizador autenticado
+  Stream<DocumentSnapshot<Map<String, dynamic>>> getUserProfile() {
+    final user = FirebaseAuth.instance.currentUser;
+    if (user == null) {
+      // stream vazia
+      return const Stream.empty();
+    }
+    return _firestore.collection('users').doc(user.uid).snapshots();
+  }
+
+  // Update user profile generic
   Future<void> updateUserProfile(String uid, Map<String, dynamic> data) async {
     try {
       await _firestore.collection('users').doc(uid).update(data);
     } catch (e) {
       print('Error updating user profile: $e');
+    }
+  }
+
+  // Helper específico para foto de perfil
+  Future<bool> updateProfilePicture(String downloadUrl) async {
+    final user = FirebaseAuth.instance.currentUser;
+    if (user == null) return false;
+    try {
+      await _firestore
+          .collection('users')
+          .doc(user.uid)
+          .update({'photoURL': downloadUrl});
+      return true;
+    } catch (e) {
+      print('Error updating profile picture: $e');
+      return false;
     }
   }
 }
