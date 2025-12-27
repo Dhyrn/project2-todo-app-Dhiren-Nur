@@ -2,7 +2,7 @@ import 'package:flutter/foundation.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
 import 'package:geolocator/geolocator.dart';
-import '../models/weather.dart'; // teu model
+import '../models/weather.dart';
 
 class WeatherProvider with ChangeNotifier {
   Weather? _currentWeather;
@@ -15,62 +15,72 @@ class WeatherProvider with ChangeNotifier {
   bool get isLoading => _isLoading;
   String? get error => _error;
 
-  static const String _apiKey = 'SUA_OPENWEATHERMAP_API_KEY_AQUI';
   static const String _apiUrl = 'https://api.open-meteo.com/v1/forecast';
 
   Future<void> fetchCurrentWeather() async {
     try {
+      if (_isLoading) return;
+
       _isLoading = true;
       _error = null;
       notifyListeners();
 
-      // Geolocalização
-      bool serviceEnabled = await Geolocator.isLocationServiceEnabled();
-      if (!serviceEnabled) {
-        _error = 'Serviços de localização desativados';
-        _isLoading = false;
-        notifyListeners();
-        return;
+      debugPrint('WeatherProvider: Iniciando fetch...');
+
+      // Geolocalização (com fallback para Lisboa)
+      Position? position;
+      try {
+        position = await Geolocator.getCurrentPosition(
+          desiredAccuracy: LocationAccuracy.medium,
+        );
+        debugPrint('WeatherProvider: GPS OK - ${position.latitude}, ${position.longitude}');
+      } catch (e) {
+        debugPrint('WeatherProvider: GPS falhou, usando Lisboa: $e');
+        position = Position(
+          longitude: -9.1393,
+          latitude: 38.7223,
+          timestamp: DateTime.now(),
+          accuracy: 0,
+          altitude: 0,
+          altitudeAccuracy: 0,
+          heading: 0,
+          headingAccuracy: 0,
+          speed: 0,
+          speedAccuracy: 0,
+        );
       }
 
-      LocationPermission permission = await Geolocator.checkPermission();
-      if (permission == LocationPermission.denied) {
-        permission = await Geolocator.requestPermission();
-        if (permission == LocationPermission.denied) {
-          _error = 'Permissão de localização negada';
-          _isLoading = false;
-          notifyListeners();
-          return;
-        }
-      }
+      _currentPosition = position;
 
-      _currentPosition = await Geolocator.getCurrentPosition(
-        desiredAccuracy: LocationAccuracy.high,
+      // Open-Meteo API
+      final url = Uri.parse(
+        '$_apiUrl?latitude=${position.latitude}&longitude=${position.longitude}&current_weather=true&timezone=Europe/Lisbon&language=pt',
       );
 
-      // Open-Meteo API (grátis, sem key)
-      final url = Uri.parse('$_apiUrl?latitude=${_currentPosition!.latitude}&longitude=${_currentPosition!.longitude}&current_weather=true&timezone=Europe/Lisbon&language=pt');
+      debugPrint('WeatherProvider: Chamando API: $url');
 
-      final response = await http.get(url);
+      final response = await http.get(url).timeout(const Duration(seconds: 10));
 
       if (response.statusCode == 200) {
         final jsonData = json.decode(response.body);
         _currentWeather = Weather.fromJson(jsonData);
         _error = null;
+        debugPrint('WeatherProvider: SUCCESS - ${_currentWeather!.temperature}°C');
       } else {
-        _error = 'Erro ao obter tempo: ${response.statusCode}';
+        _error = 'Erro API: ${response.statusCode}';
+        debugPrint('WeatherProvider: ERRO API: ${response.statusCode}');
       }
     } catch (e) {
-      _error = 'Erro de rede: $e';
+      _error = 'Erro: $e';
+      debugPrint('WeatherProvider: ERRO: $e');
     } finally {
       _isLoading = false;
       notifyListeners();
     }
   }
 
-  // Sugestão para tarefas outdoor
   String getOutdoorSuggestion() {
-    if (_currentWeather == null) return '';
+    if (_currentWeather == null) return 'Sem dados';
 
     final temp = _currentWeather!.temperature;
 
@@ -85,9 +95,4 @@ class WeatherProvider with ChangeNotifier {
       _currentWeather != null && _currentWeather!.temperature >= 10 && _currentWeather!.temperature <= 28;
 
   Future<void> refresh() => fetchCurrentWeather();
-
-  @override
-  void dispose() {
-    super.dispose();
-  }
 }

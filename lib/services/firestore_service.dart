@@ -5,28 +5,33 @@ import '../models/project.dart';
 class FirestoreService {
   final FirebaseFirestore _db = FirebaseFirestore.instance;
 
-  // referência à subcoleção de tasks de um utilizador
   CollectionReference<Map<String, dynamic>> _userTasksRef(String userId) {
     return _db.collection('users').doc(userId).collection('tasks');
   }
 
-  // stream de tasks do utilizador autenticado
-  Stream<List<Task>> watchUserTasks(String userId) {
+  CollectionReference<Map<String, dynamic>> _userSharedTasksRef(String userId) {
+    return _db.collection('users').doc(userId).collection('sharedTasks');
+  }
+
+  Stream<List<Task>> watchAllUserTasks(String userId) {
     return _userTasksRef(userId)
         .orderBy('priority')
         .snapshots()
-        .map(
-          (snapshot) =>
-          snapshot.docs
-              .map(
-                (doc) => Task.fromFirestore(doc.data(), doc.id),
-          )
-              .toList(),
-    );
+        .map((snapshot) => snapshot.docs
+        .map((doc) => Task.fromFirestore(doc.data(), doc.id))
+        .toList());
+  }
+
+  // Mantém compatibilidade
+  Stream<List<Task>> watchUserTasks(String userId) {
+    return watchAllUserTasks(userId);
   }
 
   Future<void> addTask(String userId, Task task) async {
-    await _userTasksRef(userId).add(task.toFirestore());
+    final taskWithCollab = task.copyWith(
+      collaborators: task.collaborators ?? [],
+    );
+    await _userTasksRef(userId).add(taskWithCollab.toFirestore());
   }
 
   Future<void> updateTask(String userId, Task task) async {
@@ -51,28 +56,17 @@ class FirestoreService {
         .where('title', isLessThanOrEqualTo: '$query\uf8ff')
         .get();
 
-    return snapshot.docs
-        .map((doc) => Task.fromFirestore(doc.data(), doc.id))
-        .toList();
+    return snapshot.docs.map((doc) => Task.fromFirestore(doc.data(), doc.id)).toList();
   }
 
-// ---------------- PROJECTS ----------------
-
+  // PROJECTS (igual)
   CollectionReference<Map<String, dynamic>> _userProjectsRef(String userId) {
     return _db.collection('users').doc(userId).collection('projects');
   }
 
   Stream<List<Project>> watchUserProjects(String userId) {
-    return _userProjectsRef(userId)
-        .orderBy('createdAt')
-        .snapshots()
-        .map(
-          (snapshot) =>
-          snapshot.docs
-              .map(
-                (doc) => Project.fromFirestore(doc.data(), doc.id),
-          )
-              .toList(),
+    return _userProjectsRef(userId).orderBy('createdAt').snapshots().map(
+          (snapshot) => snapshot.docs.map((doc) => Project.fromFirestore(doc.data(), doc.id)).toList(),
     );
   }
 
@@ -89,13 +83,10 @@ class FirestoreService {
 
   Future<void> updateProject(String userId, Project project) async {
     if (project.id == null) return;
-    await _userProjectsRef(userId)
-        .doc(project.id)
-        .update(project.toFirestore());
+    await _userProjectsRef(userId).doc(project.id).update(project.toFirestore());
   }
 
   Future<void> deleteProject(String userId, String projectId) async {
     await _userProjectsRef(userId).doc(projectId).delete();
-    // mais tarde podemos decidir o que fazer às tasks desse projeto
   }
 }

@@ -32,7 +32,8 @@ class Task {
   String? locationName;
   List<String> attachments;
   bool isOutdoor;
-  bool locationReminderEnabled; // NOVO
+  bool locationReminderEnabled;
+  List<String>? collaborators;
 
   Task({
     this.id,
@@ -49,7 +50,8 @@ class Task {
     this.locationName,
     List<String>? attachments,
     this.isOutdoor = false,
-    this.locationReminderEnabled = false, // NOVO
+    this.locationReminderEnabled = false,
+    this.collaborators,
   })  : subtasks = subtasks ?? [],
         attachments = attachments ?? [];
 
@@ -58,6 +60,7 @@ class Task {
     final tsUpdated = map['updatedAt'] as Timestamp?;
     final List<dynamic>? rawSubtasks = map['subtasks'] as List<dynamic>?;
     final List<dynamic>? rawAttachments = map['attachments'] as List<dynamic>?;
+    final List<dynamic>? rawCollaborators = map['collaborators'] as List<dynamic?>?;
 
     return Task(
       id: id,
@@ -81,7 +84,10 @@ class Task {
           ? rawAttachments.whereType<String>().toList()
           : [],
       isOutdoor: map['isOutdoor'] ?? false,
-      locationReminderEnabled: map['locationReminderEnabled'] ?? false, // NOVO
+      locationReminderEnabled: map['locationReminderEnabled'] ?? false,
+      collaborators: rawCollaborators != null
+          ? rawCollaborators.whereType<String>().toList()
+          : [],
     );
   }
 
@@ -100,8 +106,47 @@ class Task {
       'locationName': locationName,
       'attachments': attachments,
       'isOutdoor': isOutdoor,
-      'locationReminderEnabled': locationReminderEnabled, // NOVO
+      'locationReminderEnabled': locationReminderEnabled,
+      'collaborators': collaborators ?? [],
     };
+  }
+
+  Task copyWith({
+    String? id,
+    String? title,
+    String? description,
+    String? projectId,
+    DateTime? dueDate,
+    Priority? priority,
+    bool? isDone,
+    DateTime? createdAt,
+    DateTime? updatedAt,
+    List<Subtask>? subtasks,
+    GeoPoint? location,
+    String? locationName,
+    List<String>? attachments,
+    bool? isOutdoor,
+    bool? locationReminderEnabled,
+    List<String>? collaborators,
+  }) {
+    return Task(
+      id: id ?? this.id,
+      title: title ?? this.title,
+      description: description ?? this.description,
+      projectId: projectId ?? this.projectId,
+      dueDate: dueDate ?? this.dueDate,
+      priority: priority ?? this.priority,
+      isDone: isDone ?? this.isDone,
+      createdAt: createdAt ?? this.createdAt,
+      updatedAt: updatedAt ?? this.updatedAt,
+      subtasks: subtasks ?? this.subtasks,
+      location: location ?? this.location,
+      locationName: locationName ?? this.locationName,
+      attachments: attachments ?? this.attachments,
+      isOutdoor: isOutdoor ?? this.isOutdoor,
+      locationReminderEnabled: locationReminderEnabled ?? this.locationReminderEnabled,
+      collaborators: collaborators ?? this.collaborators,
+    );
   }
 
   Map<String, dynamic> toMap() => toFirestore();

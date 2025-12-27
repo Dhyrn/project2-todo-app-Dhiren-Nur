@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_core/firebase_core.dart';
+import 'package:project1/providers/user_provider.dart';
 import 'package:project1/providers/weather_provider.dart';
 import 'package:project1/services/firestore_service.dart';
 import 'screens/add_edit_screen.dart';
@@ -33,6 +34,7 @@ class TodoApp extends StatelessWidget {
         ChangeNotifierProvider(create: (_) => TaskProvider()),
         ChangeNotifierProvider(create: (_) => ProjectProvider(FirestoreService())),
         ChangeNotifierProvider(create: (_) => WeatherProvider()..fetchCurrentWeather()),
+        ChangeNotifierProvider(create: (_) => UserProvider()),
       ],
       child: const _RootApp(),
     );

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../models/task.dart';
 import '../services/firestore_service.dart';
+import '../services/user_service.dart';
 
 class TaskProvider extends ChangeNotifier {
   final FirestoreService _firestore;
@@ -10,16 +11,14 @@ class TaskProvider extends ChangeNotifier {
   bool _isLoading = false;
   String? _error;
 
-  TaskProvider({FirestoreService? firestore})
-      : _firestore = firestore ?? FirestoreService();
+  TaskProvider({FirestoreService? firestore}) : _firestore = firestore ?? FirestoreService();
 
   List<Task> get tasks => _tasks;
   bool get isLoading => _isLoading;
   String? get error => _error;
 
-  // chamado quando o utilizador de auth muda
   void updateUser(String? userId) {
-    if (_userId == userId) return; // evita recriar stream sem necessidade
+    if (_userId == userId) return;
     _userId = userId;
 
     if (_userId == null) {
@@ -28,10 +27,35 @@ class TaskProvider extends ChangeNotifier {
       _isLoading = false;
       notifyListeners();
     } else {
-      _listenToTasks();
+      // ✅ Usa watchAllUserTasks (próprias + partilhadas)
+      _listenToAllTasks();
     }
   }
 
+  // ✅ NOVO: Escuta tasks próprias + partilhadas
+  void _listenToAllTasks() {
+    if (_userId == null) return;
+
+    _isLoading = true;
+    _error = null;
+    notifyListeners();
+
+    _firestore.watchAllUserTasks(_userId!).listen(
+          (tasks) {
+        _tasks = tasks;
+        _isLoading = false;
+        _error = null;
+        notifyListeners();
+      },
+      onError: (e) {
+        _isLoading = false;
+        _error = e.toString();
+        notifyListeners();
+      },
+    );
+  }
+
+  // Mantém _listenToTasks antigo para compatibilidade (apenas próprias)
   void _listenToTasks() {
     if (_userId == null) return;
 
@@ -74,59 +98,37 @@ class TaskProvider extends ChangeNotifier {
     await _firestore.setTaskDone(_userId!, id, isDone);
   }
 
+  // ✅ NOVO: Partilhar task com utilizador
+  Future<void> shareTask(String taskId, String collaboratorId) async {
+    if (_userId == null) return;
+    final userService = UserService();
+    await userService.shareTaskWithUser(taskId, _userId!, collaboratorId, add: true);
+  }
+
+  // ✅ NOVO: Remover partilha
+  Future<void> unshareTask(String taskId, String collaboratorId) async {
+    if (_userId == null) return;
+    final userService = UserService();
+    await userService.shareTaskWithUser(taskId, _userId!, collaboratorId, add: false);
+  }
+
   Future<void> addAttachment(String taskId, String url) async {
     if (_userId == null) return;
-
-    final task = _tasks.firstWhere(
-          (t) => t.id == taskId,
-      orElse: () => throw Exception('Task not found'),
-    );
-
-    final updated = Task(
-      id: task.id,
-      title: task.title,
-      description: task.description,
-      projectId: task.projectId,
-      dueDate: task.dueDate,
-      priority: task.priority,
-      isDone: task.isDone,
-      createdAt: task.createdAt,
-      updatedAt: DateTime.now(),
-      subtasks: task.subtasks,
-      location: task.location,
-      locationName: task.locationName,
+    final task = _tasks.firstWhere((t) => t.id == taskId, orElse: () => throw Exception('Task not found'));
+    final updated = task.copyWith(
       attachments: [...task.attachments, url],
+      updatedAt: DateTime.now(),
     );
-
     await _firestore.updateTask(_userId!, updated);
   }
 
   Future<void> removeAttachment(String taskId, String url) async {
     if (_userId == null) return;
-
-    final task = _tasks.firstWhere(
-          (t) => t.id == taskId,
-      orElse: () => throw Exception('Task not found'),
-    );
-
-    final updated = Task(
-      id: task.id,
-      title: task.title,
-      description: task.description,
-      projectId: task.projectId,
-      dueDate: task.dueDate,
-      priority: task.priority,
-      isDone: task.isDone,
-      createdAt: task.createdAt,
+    final task = _tasks.firstWhere((t) => t.id == taskId, orElse: () => throw Exception('Task not found'));
+    final updated = task.copyWith(
+      attachments: task.attachments.where((a) => a != url).toList(),
       updatedAt: DateTime.now(),
-      subtasks: task.subtasks,
-      location: task.location,
-      locationName: task.locationName,
-      attachments:
-      task.attachments.where((a) => a != url).toList(),
     );
-
     await _firestore.updateTask(_userId!, updated);
   }
-
 }

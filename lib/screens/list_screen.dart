@@ -5,6 +5,7 @@ import '../models/project.dart';
 import '../providers/task_provider.dart';
 import '../providers/project_provider.dart';
 import '../providers/weather_provider.dart';
+import '../services/location_reminder_service.dart';
 import './add_edit_screen.dart';
 import './detail_screen.dart';
 import './profile_screen.dart';
@@ -24,15 +25,13 @@ class ListScreen extends StatefulWidget {
   State<ListScreen> createState() => _ListScreenState();
 }
 
-class _ListScreenState extends State<ListScreen> {
+class _ListScreenState extends State<ListScreen> with WidgetsBindingObserver{
   ListMode _mode = ListMode.tasks;
   String? _currentProjectId;
   String? _currentProjectName;
 
   late TextEditingController _searchController;
   int totalTasksCount = 0;
-
-  late final weatherProvider = Provider.of<WeatherProvider>(context);
 
   TaskFilter _taskFilter = TaskFilter.all;
   TaskSort _taskSort = TaskSort.priority;
@@ -43,14 +42,14 @@ class _ListScreenState extends State<ListScreen> {
     _searchController = TextEditingController();
     // Weather refresh automático
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      final weatherProvider = Provider.of<WeatherProvider>(context, listen: false);
-      weatherProvider.fetchCurrentWeather();
+      LocationReminderService.instance.checkNearbyTasks(context);
     });
   }
 
 
   @override
   void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
     _searchController.dispose();
     super.dispose();
   }
@@ -115,7 +114,6 @@ class _ListScreenState extends State<ListScreen> {
             children: [
               Column(
                 children: [
-                  // SearchBar para tarefas e projetos (com filtro dentro)
                   Container(
                     margin:
                     const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
@@ -144,6 +142,7 @@ class _ListScreenState extends State<ListScreen> {
                                   setState(() {});
                                 },
                               ),
+                            if (_mode == ListMode.tasks)
                             IconButton(
                               icon: const Icon(Icons.filter_list),
                               onPressed: _openFilterSheet,
@@ -167,16 +166,6 @@ class _ListScreenState extends State<ListScreen> {
                         // MODO PROJETOS
                         if (_mode == ListMode.projects) {
                           List<Project> projects = projectProvider.projects;
-
-                          final query =
-                          _searchController.text.toLowerCase().trim();
-                          if (query.isNotEmpty) {
-                            projects = projects
-                                .where((p) => p.name
-                                .toLowerCase()
-                                .contains(query))
-                                .toList();
-                          }
 
                           if (projects.isEmpty) {
                             return const Center(
