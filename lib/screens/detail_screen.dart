@@ -38,6 +38,16 @@ class _DetailScreenState extends State<DetailScreen> {
     return DateFormat('dd/MM/yyyy HH:mm').format(dt!);
   }
 
+  String _fileNameFromUrl(String url) {
+    try {
+      final uri = Uri.parse(url);
+      final decodedPath = Uri.decodeFull(uri.path);
+      return decodedPath.split('/').last;
+    } catch (_) {
+      return 'ficheiro';
+    }
+  }
+
   @override
   void initState() {
     super.initState();
@@ -182,6 +192,58 @@ class _DetailScreenState extends State<DetailScreen> {
 
     ScaffoldMessenger.of(context).showSnackBar(
       const SnackBar(content: Text('Colaborador removido')),
+    );
+  }
+
+  void _openImagePreview(String imageUrl) {
+    showDialog(
+      context: context,
+      barrierColor: Colors.black,
+      builder: (context) {
+        return GestureDetector(
+          onTap: () => Navigator.of(context).pop(),
+          child: Scaffold(
+            backgroundColor: Colors.black,
+            body: SafeArea(
+              child: Stack(
+                children: [
+                  Center(
+                    child: InteractiveViewer(
+                      minScale: 0.5,
+                      maxScale: 4,
+                      child: Image.network(
+                        imageUrl,
+                        fit: BoxFit.contain,
+                        loadingBuilder: (context, child, progress) {
+                          if (progress == null) return child;
+                          return const CircularProgressIndicator(
+                            color: Colors.white,
+                          );
+                        },
+                        errorBuilder: (_, __, ___) => const Icon(
+                          Icons.broken_image,
+                          color: Colors.white,
+                          size: 80,
+                        ),
+                      ),
+                    ),
+                  ),
+
+                  // Botão fechar
+                  Positioned(
+                    top: 12,
+                    right: 12,
+                    child: IconButton(
+                      icon: const Icon(Icons.close, color: Colors.white, size: 28),
+                      onPressed: () => Navigator.of(context).pop(),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        );
+      },
     );
   }
 
@@ -760,10 +822,12 @@ class _DetailScreenState extends State<DetailScreen> {
                     )
                   else
                     ...widget.task.attachments.map((url) {
+                      final fileName = _fileNameFromUrl(url);
+
                       return ListTile(
-                        leading: const Icon(Icons.insert_drive_file),
+                        leading: const Icon(Icons.image),
                         title: Text(
-                          url,
+                          fileName,
                           maxLines: 1,
                           overflow: TextOverflow.ellipsis,
                         ),
@@ -771,8 +835,7 @@ class _DetailScreenState extends State<DetailScreen> {
                           icon: const Icon(Icons.delete, color: Colors.redAccent),
                           onPressed: () => _removeAttachment(url),
                         ),
-                        onTap: () {
-                        },
+                        onTap: () => _openImagePreview(url),
                       );
                     }).toList(),
                 ],

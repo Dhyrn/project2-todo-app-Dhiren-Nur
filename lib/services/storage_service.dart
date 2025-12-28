@@ -26,7 +26,11 @@ class StorageService {
       print('Upload para: profile_images/$userId.jpg');
 
       // 3. Nova API: putFile direto retorna URL se sucesso
-      final storageRef = _storage.ref().child('profile_images/$userId.jpg');
+      final storageRef = _storage
+          .ref()
+          .child('profile_images')
+          .child(userId)
+          .child('profile.jpg');
 
       // Upload com tratamento de erro
       final uploadTask = storageRef.putFile(file);
@@ -56,11 +60,20 @@ class StorageService {
       final userId = _auth.currentUser?.uid;
       if (userId == null) return false;
 
-      final storageRef = _storage.ref().child('profile_images/$userId.jpg');
+      final storageRef = _storage
+          .ref()
+          .child('profile_images')
+          .child(userId)
+          .child('profile.jpg');
+
+      await storageRef.getMetadata();
 
       await storageRef.delete();
       return true;
-    } catch (e) {
+    } on FirebaseException catch (e) {
+      if (e.code == 'object-not-found') {
+        return true;
+      }
       print('Error deleting image: $e');
       return false;
     }

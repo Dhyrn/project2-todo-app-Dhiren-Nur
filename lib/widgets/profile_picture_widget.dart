@@ -1,3 +1,4 @@
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'dart:io';
@@ -21,11 +22,42 @@ class _ProfilePictureWidgetState extends State<ProfilePictureWidget> {
   final UserService _userService = UserService();
   bool _isUploading = false;
 
-  Future<void> _showImageSourceDialog() async {
+
+  Future<void> _removeProfilePicture() async {
+    setState(() => _isUploading = true);
+
+    try {
+      await _storageService.deleteProfilePicture();
+
+      final user = FirebaseAuth.instance.currentUser;
+      if (user == null) return;
+
+      await _userService.updateUserProfile(
+        user.uid,
+        {'photoURL': ''},
+      );
+
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('📸 Fotografia removida')),
+        );
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Erro ao remover foto: $e')),
+        );
+      }
+    } finally {
+      if (mounted) setState(() => _isUploading = false);
+    }
+  }
+
+  Future<void> _showImageSourceDialog({required bool hasPhoto}) async {
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
-        title: const Text('Escolher origem'),
+        title: const Text('Foto de perfil'),
         content: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
@@ -39,12 +71,26 @@ class _ProfilePictureWidgetState extends State<ProfilePictureWidget> {
             ),
             ListTile(
               leading: const Icon(Icons.camera_alt),
-              title: const Text('Câmera'),
+              title: const Text('Câmara'),
               onTap: () {
                 Navigator.pop(context);
                 _updateProfilePicture(ImageSource.camera);
               },
             ),
+            if (hasPhoto)
+              const Divider(),
+            if (hasPhoto)
+              ListTile(
+                leading: const Icon(Icons.delete, color: Colors.red),
+                title: const Text(
+                  'Remover fotografia',
+                  style: TextStyle(color: Colors.red),
+                ),
+                onTap: () {
+                  Navigator.pop(context);
+                  _removeProfilePicture();
+                },
+              ),
           ],
         ),
       ),
@@ -102,6 +148,7 @@ class _ProfilePictureWidgetState extends State<ProfilePictureWidget> {
           final data = snapshot.data!.data() as Map<String, dynamic>?;
           photoURL = data?['photoURL'] as String?;
         }
+        final hasPhoto = photoURL != null && photoURL.isNotEmpty;
 
         return Stack(
           children: [
@@ -129,7 +176,9 @@ class _ProfilePictureWidgetState extends State<ProfilePictureWidget> {
               bottom: 0,
               right: 0,
               child: GestureDetector(
-                onTap: _isUploading ? null : _showImageSourceDialog,
+                onTap: _isUploading
+                    ? null
+                    : () => _showImageSourceDialog(hasPhoto: hasPhoto),
                 child: Container(
                   padding: const EdgeInsets.all(8),
                   decoration: BoxDecoration(

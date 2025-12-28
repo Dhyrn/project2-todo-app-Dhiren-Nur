@@ -107,7 +107,10 @@ class UserService {
 
   Future<void> updateUserProfile(String uid, Map<String, dynamic> data) async {
     try {
-      await _firestore.collection('users').doc(uid).update(data);
+      await _firestore
+          .collection('users')
+          .doc(uid)
+          .set(data, SetOptions(merge: true));
     } catch (e) {
       print('Error updating user profile: $e');
     }
