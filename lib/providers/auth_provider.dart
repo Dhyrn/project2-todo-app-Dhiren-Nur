@@ -28,16 +28,34 @@ class AuthProvider extends ChangeNotifier {
     });
   }
 
-  Future<void> signUpWithEmail(String email, String password) async {
-    _setLoading(true);
+  Future<void> signUpWithEmail(
+      String name,
+      String email,
+      String password,
+      ) async {
     try {
+      _isLoading = true;
       _errorMessage = null;
-      await _authService.signUpWithEmail(email, password);
-      // _user será atualizado pelo listener de authStateChanges
+      notifyListeners();
+
+      // Registo
+      await _authService.signUpWithEmail(
+        name,
+        email,
+        password,
+      );
+
+      final currentUser = FirebaseAuth.instance.currentUser;
+      await currentUser?.reload();
+
+      _user = FirebaseAuth.instance.currentUser;
+      notifyListeners();
     } catch (e) {
       _errorMessage = e.toString();
+      notifyListeners();
     } finally {
-      _setLoading(false);
+      _isLoading = false;
+      notifyListeners();
     }
   }
 

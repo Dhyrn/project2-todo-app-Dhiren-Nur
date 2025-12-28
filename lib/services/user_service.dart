@@ -5,27 +5,36 @@ class UserService {
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
 
   // Create user profile in Firestore
-  Future<void> createUserProfile(User user) async {
-    try {
-      await _firestore.collection('users').doc(user.uid).set({
-        'uid': user.uid,
-        'email': user.email,
-        'displayName': user.displayName ?? '',
-        'photoURL': user.photoURL ?? '',
-        'createdAt': FieldValue.serverTimestamp(),
-      });
-    } catch (e) {
-      print('Error creating user profile: $e');
-    }
+  Future<void> createUserProfile({
+    required String uid,
+    required String email,
+    required String displayName,
+    String photoURL = '',
+  }) async {
+    await _firestore.collection('users').doc(uid).set({
+      'uid': uid,
+      'email': email,
+      'displayName': displayName,
+      'photoURL': photoURL,
+      'createdAt': FieldValue.serverTimestamp(),
+    });
   }
 
-  // ✅ NOVO: Lista de utilizadores para dropdown (sem o próprio)
   Stream<List<Map<String, dynamic>>> getOtherUsers(String currentUserId) {
-    return _firestore
-        .collection('users')
-        .where('uid', isNotEqualTo: currentUserId)
-        .snapshots()
-        .map((snapshot) => snapshot.docs.map((doc) => doc.data()).toList());
+    return _firestore.collection('users').snapshots().map((snapshot) {
+      print('USERS DOCS: ${snapshot.docs.length}');
+      for (final d in snapshot.docs) {
+        print('DOC ID: ${d.id} DATA: ${d.data()}');
+      }
+
+      return snapshot.docs
+          .where((doc) => doc.id != currentUserId)
+          .map((doc) => {
+        ...doc.data(),
+        'uid': doc.id,
+      })
+          .toList();
+    });
   }
 
   // Get user profile once
@@ -48,36 +57,51 @@ class UserService {
     return _firestore.collection('users').doc(user.uid).snapshots();
   }
 
-  // ✅ NOVO: Adicionar/remover colaborador numa task
-  Future<void> shareTaskWithUser(String taskId, String ownerId, String collaboratorId, {bool add = true}) async {
-    try {
-      final taskRef = _firestore.collection('users').doc(ownerId).collection('tasks').doc(taskId);
+  Future<void> shareTaskWithUser(
+      String taskId,
+      String ownerId,
+      String collaboratorId, {
+        bool add = true,
+      }) async {
+    final ownerTaskRef = _firestore
+        .collection('users')
+        .doc(ownerId)
+        .collection('tasks')
+        .doc(taskId);
 
-      if (add) {
-        // Adiciona colaborador
-        await taskRef.update({
-          'collaborators': FieldValue.arrayUnion([collaboratorId]),
-          'updatedAt': FieldValue.serverTimestamp(),
-        });
+    final collaboratorTaskRef = _firestore
+        .collection('users')
+        .doc(collaboratorId)
+        .collection('tasks')
+        .doc(taskId);
 
-        // Cria referência na collection do colaborador
-        await _firestore.collection('users').doc(collaboratorId).collection('sharedTasks').doc(taskId).set({
-          'taskId': taskId,
-          'ownerId': ownerId,
-          'sharedAt': FieldValue.serverTimestamp(),
-        });
-      } else {
-        // Remove colaborador
-        await taskRef.update({
-          'collaborators': FieldValue.arrayRemove([collaboratorId]),
-          'updatedAt': FieldValue.serverTimestamp(),
-        });
+    final taskSnap = await ownerTaskRef.get();
+    if (!taskSnap.exists) {
+      throw Exception('Task não encontrada');
+    }
 
-        // Remove referência
-        await _firestore.collection('users').doc(collaboratorId).collection('sharedTasks').doc(taskId).delete();
-      }
-    } catch (e) {
-      print('Error sharing task: $e');
+    if (add) {
+      final data = taskSnap.data()!;
+
+      await ownerTaskRef.update({
+        'collaborators': FieldValue.arrayUnion([collaboratorId]),
+        'updatedAt': FieldValue.serverTimestamp(),
+      });
+
+      await collaboratorTaskRef.set({
+        ...data,
+        'collaborators': FieldValue.arrayUnion([ownerId]),
+        'updatedAt': FieldValue.serverTimestamp(),
+      });
+    } else {
+      // Remove collaborator do owner
+      await ownerTaskRef.update({
+        'collaborators': FieldValue.arrayRemove([collaboratorId]),
+        'updatedAt': FieldValue.serverTimestamp(),
+      });
+
+      // Apaga a task do colaborador
+      await collaboratorTaskRef.delete();
     }
   }
 

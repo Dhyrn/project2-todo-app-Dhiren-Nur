@@ -11,12 +11,14 @@ class RegisterScreen extends StatefulWidget {
 
 class _RegisterScreenState extends State<RegisterScreen> {
   final _formKey = GlobalKey<FormState>();
+  final _nameController = TextEditingController();
   final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
   final _confirmPasswordController = TextEditingController();
 
   @override
   void dispose() {
+    _nameController.dispose();
     _emailController.dispose();
     _passwordController.dispose();
     _confirmPasswordController.dispose();
@@ -36,6 +38,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
 
     final auth = context.read<AuthProvider>();
     await auth.signUpWithEmail(
+      _nameController.text.trim(),
       _emailController.text.trim(),
       _passwordController.text.trim(),
     );
@@ -45,7 +48,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
         SnackBar(content: Text(auth.errorMessage!)),
       );
     } else {
-      Navigator.pop(context); // volta ao login; o authState depois leva à home
+      Navigator.pop(context);
     }
   }
 
@@ -76,6 +79,25 @@ class _RegisterScreenState extends State<RegisterScreen> {
                     style: TextStyle(fontSize: 28, fontWeight: FontWeight.bold),
                   ),
                   const SizedBox(height: 32),
+
+                  TextFormField(
+                    controller: _nameController,
+                    decoration: const InputDecoration(
+                      labelText: 'Name',
+                      border: OutlineInputBorder(),
+                      prefixIcon: Icon(Icons.person),
+                    ),
+                    validator: (value) {
+                      if (value == null || value.trim().isEmpty) {
+                        return 'Please enter your name';
+                      }
+                      if (value.trim().length < 2) {
+                        return 'Name is too short';
+                      }
+                      return null;
+                    },
+                  ),
+                  const SizedBox(height: 16),
 
                   TextFormField(
                     controller: _emailController,

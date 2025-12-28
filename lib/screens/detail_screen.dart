@@ -89,7 +89,7 @@ class _DetailScreenState extends State<DetailScreen> {
     await provider.setTaskDone(widget.task.id!, value);
   }
 
-  void _showShareDialog() async {
+  void _showShareDialog() {
     final userProvider = Provider.of<UserProvider>(context, listen: false);
     final taskProvider = Provider.of<TaskProvider>(context, listen: false);
 
@@ -97,80 +97,78 @@ class _DetailScreenState extends State<DetailScreen> {
 
     showDialog(
       context: context,
-      builder: (ctx) => AlertDialog(
-        title: const Text('Partilhar com'),
-        content: SizedBox(
-          width: double.maxFinite,
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              if (userProvider.isLoading)
-                const CircularProgressIndicator()
-              else if (userProvider.otherUsers.isEmpty)
-                const Text('Nenhum utilizador encontrado')
-              else
-                DropdownButtonFormField<String>(
-                  decoration: const InputDecoration(
-                    labelText: 'Selecionar utilizador',
-                    prefixIcon: Icon(Icons.person_add),
-                  ),
-                  isExpanded: true,
-                  items: userProvider.otherUsers.map<DropdownMenuItem<String>>((user) => DropdownMenuItem<String>(
-                    value: user['uid'] as String,
-                    child: Row(
-                      children: [
-                        CircleAvatar(
-                          radius: 20,
-                          backgroundImage: (user['photoURL'] as String?)?.isNotEmpty == true
-                              ? NetworkImage(user['photoURL'] as String)
-                              : null,
-                          child: (user['photoURL'] as String?) == null || (user['photoURL'] as String).isEmpty
-                              ? Text(((user['displayName'] ?? user['email'] ?? '?') as String)[0].toUpperCase())
-                              : null,
+      builder: (ctx) {
+        return StatefulBuilder(
+          builder: (context, setDialogState) {
+            return AlertDialog(
+              title: const Text('Partilhar com'),
+              content: SizedBox(
+                width: double.maxFinite,
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    if (userProvider.isLoading)
+                      const CircularProgressIndicator()
+                    else if (userProvider.otherUsers.isEmpty)
+                      const Text('Nenhum utilizador encontrado')
+                    else
+                      DropdownButtonFormField<String>(
+                        decoration: const InputDecoration(
+                          labelText: 'Selecionar utilizador',
+                          prefixIcon: Icon(Icons.person_add),
                         ),
-                        const SizedBox(width: 12),
-                        Expanded(
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Text(user['displayName'] as String? ?? user['email'] as String? ?? 'Utilizador'),
-                              Text(
-                                user['email'] as String? ?? '',
-                                style: TextStyle(fontSize: 12, color: Colors.grey[600]),
-                              ),
-                            ],
-                          ),
-                        ),
-                      ],
-                    ),
-                  )).toList(),
-                  onChanged: (String? value) => selectedUserId = value,
-                ),
+                        isExpanded: true,
+                        items: userProvider.otherUsers.map((user) {
+                          final name =
+                          (user['displayName'] as String?)?.trim();
+                          final label =
+                          name != null && name.isNotEmpty
+                              ? name
+                              : 'Utilizador';
 
-            ],
-          ),
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.of(ctx).pop(),
-            child: const Text('Cancelar'),
-          ),
-          ElevatedButton(
-            onPressed: selectedUserId != null
-                ? () async {
-              await taskProvider.shareTask(widget.task.id!, selectedUserId!);
-              if (mounted) {
-                Navigator.of(ctx).pop();
-                ScaffoldMessenger.of(context).showSnackBar(
-                  SnackBar(content: Text('✅ Partilhado com sucesso!')),
-                );
-              }
-            }
-                : null,
-            child: const Text('Partilhar'),
-          ),
-        ],
-      ),
+                          return DropdownMenuItem<String>(
+                            value: user['uid'] as String,
+                            child: Text(label),
+                          );
+                        }).toList(),
+                        onChanged: (value) {
+                          setDialogState(() {
+                            selectedUserId = value;
+                          });
+                        },
+                      ),
+                  ],
+                ),
+              ),
+              actions: [
+                TextButton(
+                  onPressed: () => Navigator.of(ctx).pop(),
+                  child: const Text('Cancelar'),
+                ),
+                ElevatedButton(
+                  onPressed: selectedUserId == null
+                      ? null
+                      : () async {
+                    await taskProvider.shareTask(
+                      widget.task.id!,
+                      selectedUserId!,
+                    );
+                    if (context.mounted) {
+                      Navigator.of(ctx).pop();
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(
+                          content: Text('✅ Partilhado com sucesso!'),
+                        ),
+                      );
+                    }
+                  },
+                  child: const Text('Partilhar'),
+                ),
+              ],
+            );
+          },
+        );
+      },
     );
   }
 
@@ -250,7 +248,7 @@ class _DetailScreenState extends State<DetailScreen> {
     final confirmed = await showDialog<bool>(
       context: context,
       builder: (ctx) => AlertDialog(
-        title: const Text('Definir localização'),
+        title: const Text('Definir localização como atual'),
         content: TextField(
           controller: nameController,
           decoration: const InputDecoration(
@@ -644,7 +642,7 @@ class _DetailScreenState extends State<DetailScreen> {
                       ElevatedButton.icon(
                         onPressed: _setMockLocation,
                         icon: const Icon(Icons.my_location, size: 18),
-                        label: const Text('Definir localização'),
+                        label: const Text('Definir localização como atual'),
                       ),
                       const SizedBox(width: 8),
                       if (task.location != null)

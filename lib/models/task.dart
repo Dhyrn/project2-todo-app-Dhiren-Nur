@@ -34,6 +34,8 @@ class Task {
   bool isOutdoor;
   bool locationReminderEnabled;
   List<String>? collaborators;
+  bool isShared;
+  String? ownerId;
 
   Task({
     this.id,
@@ -52,6 +54,8 @@ class Task {
     this.isOutdoor = false,
     this.locationReminderEnabled = false,
     this.collaborators,
+    this.isShared = false,
+    this.ownerId,
   })  : subtasks = subtasks ?? [],
         attachments = attachments ?? [];
 
@@ -88,6 +92,10 @@ class Task {
       collaborators: rawCollaborators != null
           ? rawCollaborators.whereType<String>().toList()
           : [],
+      isShared: map['isShared'] ?? false,
+      ownerId: map['ownerId'] as String?,
+
+
     );
   }
 
@@ -108,6 +116,8 @@ class Task {
       'isOutdoor': isOutdoor,
       'locationReminderEnabled': locationReminderEnabled,
       'collaborators': collaborators ?? [],
+      'isShared' : isShared,
+      'ownerId' : ownerId,
     };
   }
 
@@ -128,6 +138,8 @@ class Task {
     bool? isOutdoor,
     bool? locationReminderEnabled,
     List<String>? collaborators,
+    bool? isShared,
+    String? ownerId,
   }) {
     return Task(
       id: id ?? this.id,
@@ -146,6 +158,8 @@ class Task {
       isOutdoor: isOutdoor ?? this.isOutdoor,
       locationReminderEnabled: locationReminderEnabled ?? this.locationReminderEnabled,
       collaborators: collaborators ?? this.collaborators,
+      isShared : isShared ?? this.isShared,
+      ownerId : ownerId ?? this.ownerId,
     );
   }
 

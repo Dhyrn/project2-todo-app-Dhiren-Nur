@@ -14,17 +14,27 @@ class AuthService {
   Stream<User?> get authStateChanges => _auth.authStateChanges();
 
   // Sign up with email and password
-  Future<UserCredential?> signUpWithEmail(String email, String password) async {
+  Future<UserCredential?> signUpWithEmail(
+      String name,
+      String email,
+      String password,
+      ) async {
     try {
       final credential = await _auth.createUserWithEmailAndPassword(
         email: email,
         password: password,
       );
 
-      // Create Firestore profile
       if (credential.user != null) {
-        final userService = UserService();
-        await userService.createUserProfile(credential.user!);
+        await credential.user!.updateDisplayName(name);
+        await credential.user!.reload();
+
+        await UserService().createUserProfile(
+          uid: credential.user!.uid,
+          email: credential.user!.email!,
+          displayName: name,
+          photoURL: credential.user!.photoURL ?? '',
+        );
       }
 
       return credential;
@@ -49,7 +59,7 @@ class AuthService {
   Future<UserCredential?> signInWithGoogle() async {
     try {
       final GoogleSignInAccount? googleUser = await _googleSignIn.signIn();
-      if (googleUser == null) return null; // User canceled
+      if (googleUser == null) return null;
 
       final GoogleSignInAuthentication googleAuth =
       await googleUser.authentication;
@@ -59,7 +69,20 @@ class AuthService {
         idToken: googleAuth.idToken,
       );
 
-      return await _auth.signInWithCredential(credential);
+      final userCredential =
+      await _auth.signInWithCredential(credential);
+
+      final user = userCredential.user;
+      if (user == null) return userCredential;
+
+      await UserService().createUserProfile(
+        uid: user.uid,
+        email: user.email ?? '',
+        displayName: user.displayName ?? '',
+        photoURL: user.photoURL ?? '',
+      );
+
+      return userCredential;
     } catch (e) {
       throw Exception('Google Sign-In failed: $e');
     }

@@ -27,12 +27,10 @@ class TaskProvider extends ChangeNotifier {
       _isLoading = false;
       notifyListeners();
     } else {
-      // ✅ Usa watchAllUserTasks (próprias + partilhadas)
       _listenToAllTasks();
     }
   }
 
-  // ✅ NOVO: Escuta tasks próprias + partilhadas
   void _listenToAllTasks() {
     if (_userId == null) return;
 
@@ -98,14 +96,12 @@ class TaskProvider extends ChangeNotifier {
     await _firestore.setTaskDone(_userId!, id, isDone);
   }
 
-  // ✅ NOVO: Partilhar task com utilizador
   Future<void> shareTask(String taskId, String collaboratorId) async {
     if (_userId == null) return;
     final userService = UserService();
     await userService.shareTaskWithUser(taskId, _userId!, collaboratorId, add: true);
   }
 
-  // ✅ NOVO: Remover partilha
   Future<void> unshareTask(String taskId, String collaboratorId) async {
     if (_userId == null) return;
     final userService = UserService();
