@@ -94,13 +94,22 @@ class UserService {
         'updatedAt': FieldValue.serverTimestamp(),
       });
     } else {
-      // Remove collaborator do owner
+
       await ownerTaskRef.update({
         'collaborators': FieldValue.arrayRemove([collaboratorId]),
         'updatedAt': FieldValue.serverTimestamp(),
       });
 
-      // Apaga a task do colaborador
+
+      final collaboratorTaskSnap = await collaboratorTaskRef.get();
+      if (collaboratorTaskSnap.exists) {
+        await collaboratorTaskRef.update({
+          'collaborators': FieldValue.arrayRemove([ownerId]),
+          'updatedAt': FieldValue.serverTimestamp(),
+        });
+      }
+
+
       await collaboratorTaskRef.delete();
     }
   }

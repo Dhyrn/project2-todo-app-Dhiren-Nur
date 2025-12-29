@@ -310,7 +310,7 @@ class _DetailScreenState extends State<DetailScreen> {
     final confirmed = await showDialog<bool>(
       context: context,
       builder: (ctx) => AlertDialog(
-        title: const Text('Definir localização como atual'),
+        title: const Text('Definir loc como atual'),
         content: TextField(
           controller: nameController,
           decoration: const InputDecoration(
@@ -704,7 +704,7 @@ class _DetailScreenState extends State<DetailScreen> {
                       ElevatedButton.icon(
                         onPressed: _setMockLocation,
                         icon: const Icon(Icons.my_location, size: 18),
-                        label: const Text('Definir localização como atual'),
+                        label: const Text('Definir loc atual'),
                       ),
                       const SizedBox(width: 8),
                       if (task.location != null)
