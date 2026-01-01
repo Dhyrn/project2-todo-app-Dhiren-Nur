@@ -30,7 +30,8 @@ Lista de tarefas com filtro e pesquisa
 <img width="1179" height="2556" alt="Simulator Screenshot - iPhone 16 - 2025-12-28 at 23 39 19" src="https://github.com/user-attachments/assets/61e8bc2c-945d-4ff9-a3fe-e9a089ca2f02" />
 
 Criar nova tarefa
-<img width="1179" height="2556" alt="Simulator Screenshot - iPhone 16 - 2025-12-28 at 23 39 33" src="https://github.com/user-attachments/assets/3f591fa1-c663-4fff-8ce2-ef55c93b10b3" />
+<img width="1179" height="2556" alt="Simulator Screenshot - iPhone 16 - 2026-01-01 at 23 09 59" src="https://github.com/user-attachments/assets/1f00b0fb-65c0-4b18-8ded-7888ce1ccc69" />
+
 
 
 Ecrã de detalhe da tarefa (subtarefas, anexos, localização, tempo, collaboradores)
@@ -39,7 +40,8 @@ Ecrã de detalhe da tarefa (subtarefas, anexos, localização, tempo, collaborad
 
 <img width="1179" height="2556" alt="Simulator Screenshot - iPhone 16 - 2025-12-28 at 23 39 45" src="https://github.com/user-attachments/assets/013a4a94-5110-413b-bc90-33b22416ec6a" />
 
-<img width="1179" height="2556" alt="Simulator Screenshot - iPhone 16 - 2025-12-28 at 23 39 51" src="https://github.com/user-attachments/assets/0f7fc48a-7eb7-4164-963f-24d7c6ee0dac" />
+<img width="1179" height="2556" alt="Simulator Screenshot - iPhone 16 - 2026-01-01 at 23 10 19" src="https://github.com/user-attachments/assets/745cd0f4-4b69-4581-8d13-6e140dbc21d7" />
+
 
 
 Ecrã de projetos
