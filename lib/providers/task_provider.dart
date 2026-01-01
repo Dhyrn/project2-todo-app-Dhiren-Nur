@@ -53,7 +53,6 @@ class TaskProvider extends ChangeNotifier {
     );
   }
 
-  // Mantém _listenToTasks antigo para compatibilidade (apenas próprias)
   void _listenToTasks() {
     if (_userId == null) return;
 

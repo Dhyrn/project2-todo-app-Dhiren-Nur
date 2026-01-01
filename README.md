@@ -2,17 +2,17 @@
 
 1. Project Overview
 
-App name: TaskFlow
+App name: Tasker
 Tagline: Organiza tarefas, projetos e tempo num só lugar.
 
-TaskFlow é uma aplicação móvel desenvolvida em Flutter para ajudar utilizadores a gerir tarefas pessoais e projetos de forma simples, mas poderosa. A app permite criar tarefas com prioridades, datas limite, subtarefas e anexos, agrupando-as por projetos para manter o foco em diferentes áreas da vida (trabalho, estudos, pessoal, etc.).
+Tasker é uma aplicação móvel desenvolvida em Flutter para ajudar utilizadores a gerir tarefas pessoais e projetos de forma simples, mas poderosa. A app permite criar tarefas com prioridades, datas limite, subtarefas e anexos, agrupando-as por projetos para manter o foco em diferentes áreas da vida (trabalho, estudos, pessoal, etc.).
 Um dos diferenciais é a integração com localização e condições meteorológicas: o utilizador pode associar uma tarefa a um local e ativar lembretes por proximidade, bem como marcar tarefas de exterior para receber sugestões com base na temperatura atual. Isto torna o planeamento mais inteligente e contextual.
-TaskFlow suporta autenticação com email/password e Google, sincronização em tempo real com Firebase Firestore e armazenamento de ficheiros no Firebase Storage, garantindo que os dados estão sempre disponíveis em todos os dispositivos do utilizador.
-Além disso, o sistema de subtarefas e anexos facilita partir tarefas grandes em partes menores, anexar imagens ou documentos de apoio e acompanhar o progresso de forma visual. A interface foi pensada para ser limpa, moderna e intuitiva, com cores a indicar prioridades e estados.
+Tasker suporta autenticação com email/password e Google, sincronização em tempo real com Firebase Firestore e armazenamento de imagens no Firebase Storage, garantindo que os dados estão sempre disponíveis em todos os dispositivos do utilizador.
+Além disso, o sistema de subtarefas e anexos facilita partir tarefas grandes em partes menores, anexar imagens de apoio e acompanhar o progresso de forma visual. A interface foi pensada para ser limpa, moderna e intuitiva, com cores a indicar prioridades e estados.
 O objetivo principal do projeto é demonstrar uma aplicação Flutter completa, com integração de vários serviços Firebase, APIs externas e recursos nativos, aplicando boas práticas de arquitetura, gestão de estado e experiência de utilizador.
 
-Demo video:
-[INSERIR LINK DO VÍDEO (YouTube / Loom / etc.)]
+Demo video: https://youtu.be/GZ4sVE71Yxw
+
 
 Screenshots ():
 
@@ -464,29 +464,27 @@ Como trabalhar com dados reativos (streams) e side effects em Flutter.
 
 9. Future Enhancements
 
-Possíveis funcionalidades futuras
+Possíveis funcionalidades futuras:
 
-Partilha real de tarefas entre utilizadores com permissões (owner vs collaborator) e sincronização de sharedTasks.
-
-Notificações push (Firebase Cloud Messaging) para:
-
-Tarefas com prazo a expirar
-
-Quando alguém partilha uma tarefa contigo
-
-Lembretes por localização reais (geofencing) em background.
+Notificações push (Firebase Cloud Messaging).
 
 Ecrã de calendário para visualizar tarefas por dia/semana/mês.
 
-Modo offline com sincronização posterior.
-
 Tema escuro e personalização de cores.
+
+Animações avançadas.
+
+Supporte multi-língua.
+
+Data Analytics.
+
+Attachments com outros ficheiros
+
+--
 
 Limitações conhecidas
 
 Lembrete por localização está marcado no modelo, mas pode não ter lógica de notificação completa em background.
-
-Partilha de tarefas pode estar apenas a nível de UI/modelo, faltando regras avançadas de segurança e permissões.
 
 A API de meteorologia é usada de forma simples, sem cache ou gestão avançada de erros.
 

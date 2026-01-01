@@ -1,6 +1,7 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import '../models/task.dart';
 import '../models/project.dart';
+import 'package:rxdart/rxdart.dart';
 
 class FirestoreService {
   final FirebaseFirestore _db = FirebaseFirestore.instance;
@@ -14,12 +15,26 @@ class FirestoreService {
   }
 
   Stream<List<Task>> watchAllUserTasks(String userId) {
-    return _userTasksRef(userId)
-        .orderBy('priority')
-        .snapshots()
-        .map((snapshot) => snapshot.docs
-        .map((doc) => Task.fromFirestore(doc.data(), doc.id))
-        .toList());
+    final own = _userTasksRef(userId).snapshots();
+    final shared = _userSharedTasksRef(userId).snapshots();
+
+    return Rx.combineLatest2(
+      own,
+      shared,
+          (QuerySnapshot<Map<String, dynamic>> a,
+          QuerySnapshot<Map<String, dynamic>> b) {
+
+        final ownTasks = a.docs
+            .map((d) => Task.fromFirestore(d.data(), d.id))
+            .toList();
+
+        final sharedTasks = b.docs
+            .map((d) => Task.fromFirestore(d.data(), d.id))
+            .toList();
+
+        return [...ownTasks, ...sharedTasks];
+      },
+    );
   }
 
   // Mantém compatibilidade
@@ -28,10 +43,14 @@ class FirestoreService {
   }
 
   Future<void> addTask(String userId, Task task) async {
-    final taskWithCollab = task.copyWith(
-      collaborators: task.collaborators ?? [],
+    final taskWithOwner = task.copyWith(
+      ownerId: userId,
+      collaborators: [],
+      isShared: false,
+      createdAt: DateTime.now(),
     );
-    await _userTasksRef(userId).add(taskWithCollab.toFirestore());
+
+    await _userTasksRef(userId).add(taskWithOwner.toFirestore());
   }
 
   Future<void> updateTask(String userId, Task task) async {

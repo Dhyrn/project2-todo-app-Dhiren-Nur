@@ -29,8 +29,6 @@ class _AddEditScreenState extends State<AddEditScreen> {
   DateTime? _dueDate;
   String? _selectedProjectId;
   late Priority _priority;
-
-  // ======= CAMPOS QUE FALTAVAM =======
   GeoPoint? _location;
   String? _locationName;
   bool _locationReminderEnabled = false;
@@ -54,8 +52,6 @@ class _AddEditScreenState extends State<AddEditScreen> {
       _dueDate = _taskToEdit?.dueDate;
       _selectedProjectId = _taskToEdit?.projectId ?? widget.initialProjectId;
       _priority = _taskToEdit?.priority ?? Priority.media;
-
-      // ======= LOAD EXTRA =======
       _location = _taskToEdit?.location;
       _locationName = _taskToEdit?.locationName;
       _locationReminderEnabled = _taskToEdit?.locationReminderEnabled ?? false;
@@ -77,7 +73,6 @@ class _AddEditScreenState extends State<AddEditScreen> {
     if (selected != null) setState(() => _dueDate = selected);
   }
 
-  // ======= LOCALIZAÇÃO MOCK (igual ao DetailScreen) =======
   Future<void> _setMockLocation() async {
     final controller = TextEditingController();
     final ok = await showDialog<bool>(
@@ -107,6 +102,32 @@ class _AddEditScreenState extends State<AddEditScreen> {
       _locationReminderEnabled = false;
     });
   }
+
+  InputDecoration _inputStyle(String label) {
+    return InputDecoration(
+      labelText: label,
+      border: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(12),
+      ),
+      contentPadding: const EdgeInsets.symmetric(vertical: 12, horizontal: 16),
+    );
+  }
+
+  Color _priorityColor(Priority p) {
+    switch (p) {
+      case Priority.critico:
+        return Colors.red;
+      case Priority.alta:
+        return Colors.orange;
+      case Priority.media:
+        return Colors.amber;
+      case Priority.baixa:
+        return Colors.green;
+      case Priority.deixaPaOutroDia:
+        return Colors.blueGrey;
+    }
+  }
+
 
   Future<void> _saveForm() async {
     if (!_formKey.currentState!.validate()) return;
@@ -163,7 +184,38 @@ class _AddEditScreenState extends State<AddEditScreen> {
               const SizedBox(height: 12),
               GestureDetector(onTap: _pickDate, child: AbsorbPointer(child: TextFormField(decoration: _input('Data'), controller: TextEditingController(text: _dueDate == null ? '' : '${_dueDate!.day}/${_dueDate!.month}/${_dueDate!.year}')))),
               const SizedBox(height: 12),
-              DropdownButtonFormField<String>(value: _selectedProjectId, decoration: _input('Projeto'), items: [const DropdownMenuItem(value: null, child: Text('Sem projeto')), ...projects.map((p) => DropdownMenuItem(value: p.id, child: Text(p.name)))] , onChanged: (v) => setState(() => _selectedProjectId = v)),
+              DropdownButtonFormField<String>(value: _selectedProjectId, decoration: _input('Projeto'), items: [const DropdownMenuItem(value: null, child: Text('Sem projeto')), ...projects.map((p) =>
+                  DropdownMenuItem(value: p.id, child: Text(p.name)))] , onChanged: (v) => setState(() => _selectedProjectId = v)),
+
+              const SizedBox(height: 12),
+
+              DropdownButtonFormField<Priority>(
+                value: _priority,
+                decoration: _inputStyle('Prioridade'),
+                items: Priority.values.map((p) {
+                  return DropdownMenuItem<Priority>(
+                    value: p,
+                    child: Row(
+                      children: [
+                        CircleAvatar(
+                          radius: 6,
+                          backgroundColor: _priorityColor(p),
+                        ),
+                        const SizedBox(width: 8),
+                        Text(priorityLabels[p]!),
+                      ],
+                    ),
+                  );
+                }).toList(),
+                onChanged: (p) {
+                  if (p != null) {
+                    setState(() => _priority = p);
+                  }
+                },
+                validator: (p) => p == null ? 'Selecione a prioridade' : null,
+                onSaved: (p) => _priority = p!,
+              ),
+
               const SizedBox(height: 12),
 
               // ======= LOCALIZAÇÃO =======

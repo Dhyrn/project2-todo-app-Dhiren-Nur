@@ -3,7 +3,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 class Project {
   String? id;
   String name;
-  String color;      // hex string, ex: "#FF6F00"
+  String color;
   DateTime? createdAt;
 
   Project({

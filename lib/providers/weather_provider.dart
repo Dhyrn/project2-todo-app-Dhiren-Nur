@@ -27,7 +27,6 @@ class WeatherProvider with ChangeNotifier {
 
       debugPrint('WeatherProvider: Iniciando fetch...');
 
-      // Geolocalização (com fallback para Lisboa)
       Position? position;
       try {
         position = await Geolocator.getCurrentPosition(
@@ -52,7 +51,6 @@ class WeatherProvider with ChangeNotifier {
 
       _currentPosition = position;
 
-      // Open-Meteo API
       final url = Uri.parse(
         '$_apiUrl?latitude=${position.latitude}&longitude=${position.longitude}&current_weather=true&timezone=Europe/Lisbon&language=pt',
       );
